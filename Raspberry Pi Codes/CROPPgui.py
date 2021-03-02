@@ -12,14 +12,14 @@ global usb2
 
 def connect():
     try:
-        usb = serial.Serial(USB_PORT,9600,timeout=2)
+        usb = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
     except:
         print("ERROR could not open USB port, check port name and permissions.")
         print("Exiting....")
         exit(-1)
         
     try:
-        usb2 = serial.Serial(USB_PORT2,9600,timeout=2)
+        usb2 = serial.Serial(USB_PORT2,9600,timeout=2) # Pumps, Linear Actuators, and Temp/Humidity sensor
     except:
         print("ERROR could not open USB port, check port name and permissions.")
         print("Exiting....")
@@ -52,6 +52,11 @@ humidFrame.grid(row=1,column=1)
 def writeToArduino(command):
     #usb.write(command)
     print(command.decode())
+
+def writeToArduino2(command):
+    #usb2.write(command)
+    print(command.decode())
+    
 
 
 def sendStepper1():
@@ -103,18 +108,55 @@ def makeStepperButtons():
     allOff.grid(row=3,column=0,columnspan=2,padx=0,pady=5,sticky="nesw")
 
 
+class liveReadout:
+    def __init__(self,parent,text):
+    
+        self.label = Label(parent,text=text)
+        self.label.pack()
+        self.val = 100
+        self.text= text
+        if text == "Humidity":
+            self.code = b'getHumid'
+        elif text == "Temperature":
+            self.code=b'getTemp'
+         
+        
+        
+        self.refreshValue()
+        self.label.after(2000,self.refreshValue)
+        
+     
+    def refreshValue(self):
+        
+        #writeToArduino2(self.code)
+        #self.val = usb2.readLine()
+        
+        
+        
+    
+        self.label.configure(text="{}: {}".format(self.text,self.val))
+        
+        self.label.after(2000,self.refreshValue)
+
+
+    
+
 def makeTempHumid():
-    tempOut = Label(tempFrame,text="Temperature: ")
-    humidOut= Label(humidFrame,text="Humidity: ")
-    tempOut.pack()
-    humidOut.pack()
+
+    tempOut = liveReadout(tempFrame,"Temperature")
+    humidOut = liveReadout(humidFrame,"Humidity" )
+
 
 makeStepperButtons()
 makeLEDButtons()
 makeTempHumid()
 
+
+
 while True:
     
+    
 
+    
     window.update()
 
