@@ -11,24 +11,26 @@ global usb2
 
 
 def connect():
+    global usb
+    global usb2
     try:
         usb = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
     except:
-        print("ERROR could not open USB port, check port name and permissions.")
+        print("ERROR could not open USB port 1, check port name and permissions.")
         print("Exiting....")
         exit(-1)
         
     try:
         usb2 = serial.Serial(USB_PORT2,9600,timeout=2) # Pumps, Linear Actuators, and Temp/Humidity sensor
     except:
-        print("ERROR could not open USB port, check port name and permissions.")
+        print("ERROR could not open USB port 2, check port name and permissions.")
         print("Exiting....")
         exit(-1)
         
 #connect()
 
 window = Tk()
-window.geometry("800x500")
+window.geometry("1200x500")
 stepperFrame = Frame(window)
 stepperFrame.grid(row=0,column=0,padx=10)
 
@@ -48,6 +50,10 @@ pumpFrame = Frame(window)
 pumpFrame.grid(row=1,column=0)
 
 
+def on_close():
+    th.output.close()
+    window.destroy()
+window.protocol("WM_DELETE_WINDOW",on_close)
 
 
 
@@ -55,11 +61,13 @@ pumpFrame.grid(row=1,column=0)
 
 
 def writeToArduino(command):
-    #usb.write(command)
+    global usb
+    usb.write(command)
     print(command.decode())
 
 def writeToArduino2(command):
-    #usb2.write(command)
+    global usb2
+    usb2.write(command)
     print(command.decode())
     
 
@@ -188,21 +196,27 @@ class tempHumid:
         self.code = b'getTH\n'
         self.frame = Frame(window)
         
+        self.output = open("output.txt","a")
+        
+        
         self.frame.after(5000,self.refreshValues)
         
         
     def refreshValues(self):
         writeToArduino2(self.code)
-        #self.humid = usb2.read_until('!')
-        #self.temp = usb2.read_until('!')
-        self.humid = self.humid + 1
-        self.temp = self.temp + 1
         
-        self.h.configure(text="Humidity: {}".format(self.humid))
-        self.t.configure(text="Temperature: {}".format(self.temp))
+        data = usb2.read_until('\n')
+        data=data.decode()
+        print(data)
+        self.humid,self.temp = data.split('!')
+        self.humid = self.humid.strip()
+        self.temp = self.temp.strip()
         
+        self.h.configure(text="Humidity: {}%".format(self.humid))
+        self.t.configure(text="Temperature: {} C".format(self.temp))
+        self.output.write("{}% | {}C\n".format(self.humid,self.temp))
         
-        self.frame.after(5000,self.refreshValues)
+        self.frame.after(10000,self.refreshValues)
         
     
 
@@ -214,18 +228,25 @@ def makeTempHumid():
 #humidOut = liveReadout(humidFrame,"Humidity" )
     humidOut = Label(humidFrame,text="Humidity")
     humidOut.pack()
+    global th
     th = tempHumid(tempOut,humidOut)
 
-makeStepperButtons()
-makeLEDButtons()
-makeTempHumid()
-makePumpButtons()
-makeActuatorButtons()
 
-while True:
-    
-    
 
     
-    window.update()
+
+
+
+
+
+if __name__ == '__main__':
+    connect()
+    makeStepperButtons()
+    makeLEDButtons()
+    makeTempHumid()
+    makePumpButtons()
+    makeActuatorButtons()
+
+    while True:
+        window.update()
 
