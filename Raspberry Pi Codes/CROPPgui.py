@@ -1,5 +1,10 @@
-from tkinter import * 
+from tkinter import *
 import serial
+from Camera_Adapter.AdapterBoard import MultiAdapter
+from Camera_Adapter.cameraapp import CameraApp
+from imutils.video import VideoStream
+import time
+
 
 
 USB_PORT = "/dev/ttyACM0"
@@ -19,14 +24,14 @@ def connect():
         print("ERROR could not open USB port 1, check port name and permissions.")
         print("Exiting....")
         exit(-1)
-        
+
     try:
         usb2 = serial.Serial(USB_PORT2,9600,timeout=2) # Pumps, Linear Actuators, and Temp/Humidity sensor
     except:
         print("ERROR could not open USB port 2, check port name and permissions.")
         print("Exiting....")
         exit(-1)
-        
+
 #connect()
 
 window = Tk()
@@ -49,6 +54,11 @@ linearFrame.grid(row=1,column=1)
 pumpFrame = Frame(window)
 pumpFrame.grid(row=1,column=0)
 
+cameraFrame = Frame(window)
+cameraFrame.grid(row=0,column=2)
+
+
+
 
 def on_close():
     th.output.close()
@@ -62,38 +72,44 @@ window.protocol("WM_DELETE_WINDOW",on_close)
 
 def writeToArduino(command):
     global usb
-    usb.write(command)
+    try:
+        usb.write(command)
+    except NameError:
+        print("usb not connected")
     print(command.decode())
 
 def writeToArduino2(command):
     global usb2
-    usb2.write(command)
+    try:
+        usb2.write(command)
+    except NameError:
+        print("usb not connected")
     print(command.decode())
-    
+
 
 
 def sendStepper1():
     writeToArduino(b'stepper1On\n')
-    
-    
+
+
 def killStepper1():
     writeToArduino(b'stepper1Off\n')
 
 
 def sendStepper2():
     writeToArduino(b'stepper2On\n')
- 
-    
+
+
 def killStepper2():
     writeToArduino(b'stepper2Off\n')
 
-    
+
 def killAllSteppers():
     writeToArduino(b'allStepperOff\n')
-    
+
 def toggleWhite():
     writeToArduino(b'toggleWhite\n')
-    
+
 def toggleUVC():
     writeToArduino(b'toggleUVC\n')
 
@@ -102,8 +118,8 @@ def makeLEDButtons():
     whiteToggle.grid(row=0,column=0,padx=1,pady=10)
     uvcToggle = Button(ledFrame,text="Toggle UVC LED's",command=toggleUVC,width=20,height=5,bg="grey")
     uvcToggle.grid(row=1,column=0,padx=1,pady=10)
-   
-    
+
+
 def makeStepperButtons():
     on1 = Button(stepperFrame, text="Run Stepper 1",command=sendStepper1,width=10,height=5,bg="green")
     off1 = Button(stepperFrame, text="Kill Stepper 1",command=killStepper1,width=10,height=5,bg="red")
@@ -124,7 +140,7 @@ def makeStepperButtons():
 
 def makePumpButtons():
     pumps = []
-    
+
     pumps.append(Button(pumpFrame,text="Pump 1",command = lambda: writeToArduino2(b"$pump01"),width = 10))
     pumps.append(Button(pumpFrame,text="Pump 2",command = lambda: writeToArduino2(b"$pump02"),width = 10))
     pumps.append(Button(pumpFrame,text="Pump 3",command = lambda: writeToArduino2(b"$pump03"),width = 10))
@@ -137,14 +153,14 @@ def makePumpButtons():
     pumps.append(Button(pumpFrame,text="Pump 10",command = lambda: writeToArduino2(b"$pump10"),width = 10))
     pumps.append(Button(pumpFrame,text="Pump 11",command = lambda: writeToArduino2(b"$pump11"),width = 10))
     pumps.append(Button(pumpFrame,text="Pump 12",command = lambda: writeToArduino2(b"$pump12"),width = 10))
-    
+
     for ind,pump in enumerate(pumps[:6]):
         pump.grid(row=0,column=ind,padx=1,pady=5)
     for ind,pump in enumerate(pumps[6:]):
         pump.grid(row=1,column=ind,padx=1,pady=5)
-    
-    
-    
+
+
+
 def toggleAct1():
     writeToArduino2(b'act1')
 def toggleAct2():
@@ -158,7 +174,7 @@ def makeActuatorButtons():
 
 class liveReadout:
     def __init__(self,parent,text):
-    
+
         self.label = Label(parent,text=text)
         self.label.pack()
         self.val = 100
@@ -167,58 +183,59 @@ class liveReadout:
             self.code = b'getHumid\n'
         elif text == "Temperature":
             self.code=b'getTemp\n'
-         
-        
-        
+
+
+
         self.refreshValue()
         self.label.after(2000,self.refreshValue)
-        
-     
+
+
     def refreshValue(self):
-        
+
         #writeToArduino2(self.code)
         #self.val = usb2.readLine()
-        self.val = self.val+1    
-        
-        
-    
+        self.val = self.val+1
+
+
+
         self.label.configure(text="{}: {}".format(self.text,self.val))
-        
+
         self.label.after(2000,self.refreshValue)
 
 class tempHumid:
     def __init__(self,t,h):
         self.humid = 0
         self.h = h
-        
+
         self.temp = 0
         self.t = t
         self.code = b'getTH\n'
         self.frame = Frame(window)
-        
+
         self.output = open("output.txt","a")
-        
-        
+
+
         self.frame.after(5000,self.refreshValues)
-        
-        
+
+
     def refreshValues(self):
+
         writeToArduino2(self.code)
-        
+
         data = usb2.read_until('\n')
         data=data.decode()
         print(data)
         self.humid,self.temp = data.split('!')
         self.humid = self.humid.strip()
         self.temp = self.temp.strip()
-        
+
         self.h.configure(text="Humidity: {}%".format(self.humid))
         self.t.configure(text="Temperature: {} C".format(self.temp))
         self.output.write("{}% | {}C\n".format(self.humid,self.temp))
-        
+
         self.frame.after(10000,self.refreshValues)
-        
-    
+
+
 
 def makeTempHumid():
 
@@ -232,21 +249,26 @@ def makeTempHumid():
     th = tempHumid(tempOut,humidOut)
 
 
+def startCameras():
+    camAdapter = MultiAdapter()
+    Arducam_adapter_board.init(320,240)
+    cameras = CameraApp("/",cameraFrame,camAdapter)
 
-    
+
+
 
 
 
 
 
 if __name__ == '__main__':
-    connect()
+    #connect()
     makeStepperButtons()
     makeLEDButtons()
     makeTempHumid()
     makePumpButtons()
     makeActuatorButtons()
+    startCameras()
 
     while True:
         window.update()
-
