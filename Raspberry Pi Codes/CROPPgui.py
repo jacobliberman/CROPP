@@ -141,25 +141,26 @@ def makeStepperButtons():
 def makePumpButtons():
     pumps = []
 
-    pumps.append(Button(pumpFrame,text="Pump 1",command = lambda: writeToArduino2(b"$pump01"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 2",command = lambda: writeToArduino2(b"$pump02"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 3",command = lambda: writeToArduino2(b"$pump03"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 4",command = lambda: writeToArduino2(b"$pump04"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 5",command = lambda: writeToArduino2(b"$pump05"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 6",command = lambda: writeToArduino2(b"$pump06"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 7",command = lambda: writeToArduino2(b"$pump07"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 8",command = lambda: writeToArduino2(b"$pump08"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 9",command = lambda: writeToArduino2(b"$pump09"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 10",command = lambda: writeToArduino2(b"$pump10"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 11",command = lambda: writeToArduino2(b"$pump11"),width = 10))
-    pumps.append(Button(pumpFrame,text="Pump 12",command = lambda: writeToArduino2(b"$pump12"),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 1",command = lambda: togglePump(1),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 2",command = lambda: togglePump(2),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 3",command = lambda: togglePump(3),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 4",command = lambda: togglePump(4),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 5",command = lambda: togglePump(5),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 6",command = lambda: togglePump(6),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 7",command = lambda: togglePump(7),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 8",command = lambda: togglePump(8),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 9",command = lambda: togglePump(9),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 10",command = lambda: togglePump(10),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 11",command = lambda: togglePump(11),width = 10))
+    pumps.append(Checkbutton(pumpFrame,text="Pump 12",command = lambda: togglePump(12),width = 10))
 
     for ind,pump in enumerate(pumps[:6]):
         pump.grid(row=0,column=ind,padx=1,pady=5)
     for ind,pump in enumerate(pumps[6:]):
         pump.grid(row=1,column=ind,padx=1,pady=5)
 
-
+def togglePump(ind):
+    writeToArduino2(bytes('$pump{:02d}'.format(ind),'utf-8'))
 
 def toggleAct1():
     writeToArduino2(b'act1')

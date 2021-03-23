@@ -1,7 +1,7 @@
 # import the necessary packages
 from PIL import Image
 from PIL import ImageTk
-import Tkinter as tk
+import tkinter as tk
 import threading
 import datetime
 import imutils
@@ -16,7 +16,7 @@ class CameraApp:
 		self.vs = multiAdapter.vs
 		self.multiAdapter = multiAdapter
 		self.outputPath = outputPath
-		self.frame = [None] * multiAdapter.camNum
+		self.frame = None
 		self.thread = None
 		self.stopEvent = None
 
@@ -39,6 +39,7 @@ class CameraApp:
 		self.thread.start()
 
 		# set a callback to handle when the window is closed
+
 		self.root.wm_title("PyImageSearch PhotoBooth")
 		self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
 
@@ -56,13 +57,13 @@ class CameraApp:
 					self.multiAdapter.select_channel(chr(65+i))
 				# grab the frame from the video stream and resize it to
 				# have a maximum width of 300 pixels
-					self.frame[i] = self.vs.read()
-					self.frame[i] = imutils.resize(self.frame[i], width=300)
+					self.frame = self.vs.read()
+					self.frame = imutils.resize(self.frame, width=300)
 
 					# OpenCV represents images in BGR order; however PIL
 					# represents images in RGB order, so we need to swap
 					# the channels, then convert to PIL and ImageTk format
-					image = cv2.cvtColor(self.frame[i], cv2.COLOR_BGR2RGB)
+					image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
 					image = Image.fromarray(image)
 					image = ImageTk.PhotoImage(image)
 
@@ -87,7 +88,10 @@ class CameraApp:
 		p = os.path.sep.join((self.outputPath, filename))
 
 		# save the file
-		cv2.imwrite(p, self.frame[i].copy())
+		self.multiAdapter.select_channel(chr(65+ind))
+		self.frame = self.vs.read()
+		self.frame = imutils.resize(self.frame,width=300)
+		cv2.imwrite(p, self.frame.copy())
 		print("[INFO] saved {}".format(filename))
 
 	def onClose(self):
