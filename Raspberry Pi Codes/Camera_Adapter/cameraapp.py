@@ -54,11 +54,15 @@ class CameraApp:
 
 
 				for i in range(0,4):
-					self.multiAdapter.select_channel(chr(65+i))
+					# self.multiAdapter.select_channel(chr(65+i))
 				# grab the frame from the video stream and resize it to
 				# have a maximum width of 300 pixels
-					self.frame = self.vs.read()
-					self.frame = imutils.resize(self.frame, width=300)
+					# self.frame = self.vs.read()
+					# self.frame = imutils.resize(self.frame, width=300)
+
+
+					self.frame = self.multiAdapter.getFrame(i)
+
 
 					# OpenCV represents images in BGR order; however PIL
 					# represents images in RGB order, so we need to swap

@@ -66,6 +66,10 @@ class MultiAdapter:
                cv.imwrite(pname,frame)
                time.sleep(1)
 
+    def getFrame(self,cam_num):
+        self.select_channel(chr(65+cam_num))
+        return vs.read()
+
     def previewSingleNew(self,cam_num):
         self.select_channel(chr(65+cam_num-1))
         while True:

@@ -1,10 +1,11 @@
 from tkinter import *
 import serial
-from Camera_Adapter.AdapterBoard import MultiAdapter
-from Camera_Adapter.cameraapp import CameraApp
-from imutils.video import VideoStream
+# from Camera_Adapter.AdapterBoard import MultiAdapter
+# from Camera_Adapter.cameraapp import CameraApp
+# from imutils.video import VideoStream
 import time
-
+from PIL import Image
+from PIL import ImageTk
 
 
 USB_PORT = "/dev/ttyACM0"
@@ -36,25 +37,38 @@ def connect():
 
 window = Tk()
 window.geometry("1200x500")
-stepperFrame = Frame(window)
-stepperFrame.grid(row=0,column=0,padx=10)
 
-ledFrame= Frame(window)
-ledFrame.grid(row=0,column=1)
 
-tempFrame = Frame(window)
-tempFrame.grid(row=2,column=0)
+info = Frame(window)
+info.grid(row=0,column=0)
 
-humidFrame = Frame(window)
-humidFrame.grid(row=2,column=1)
 
-linearFrame = Frame(window)
+data = Frame(window)
+data.grid(row=0,column=1)
+
+stepperFrame = Frame(data)
+stepperFrame.grid(row=0,column=0,padx=10,sticky='n')
+
+ledFrame= Frame(data)
+ledFrame.grid(row=0,column=1,padx=10,sticky='n')
+
+tempHumidFrame = Frame(data)
+tempHumidFrame.grid(row=0,column=2,padx=4,sticky='n')
+
+tempFrame = Frame(tempHumidFrame)
+tempFrame.grid(row=0,column=0)
+
+humidFrame = Frame(tempHumidFrame)
+humidFrame.grid(row=1,column=0)
+
+
+linearFrame = Frame(data)
 linearFrame.grid(row=1,column=1)
 
-pumpFrame = Frame(window)
+pumpFrame = Frame(data)
 pumpFrame.grid(row=1,column=0)
 
-cameraFrame = Frame(window)
+cameraFrame = Frame(data)
 cameraFrame.grid(row=0,column=2)
 
 
@@ -115,22 +129,22 @@ def toggleUVC():
 
 def makeLEDButtons():
     whiteToggle = Button(ledFrame,text="Toggle White LED's",command=toggleWhite,width=20,height=5,bg="white")
-    whiteToggle.grid(row=0,column=0,padx=1,pady=10)
-    uvcToggle = Button(ledFrame,text="Toggle UVC LED's",command=toggleUVC,width=20,height=5,bg="grey")
-    uvcToggle.grid(row=1,column=0,padx=1,pady=10)
+    whiteToggle.grid(row=0,column=0,padx=1,pady=5)
+    uvcToggle = Button(ledFrame,text="Toggle UVC LED's",command=toggleUVC,width=20,height=5,bg="lightblue")
+    uvcToggle.grid(row=1,column=0,padx=1,pady=5)
 
 
 def makeStepperButtons():
     on1 = Button(stepperFrame, text="Run Stepper 1",command=sendStepper1,width=10,height=5,bg="green")
     off1 = Button(stepperFrame, text="Kill Stepper 1",command=killStepper1,width=10,height=5,bg="red")
-    on1.grid(row=0,column=0,padx=1,pady=10)
-    off1.grid(row=0,column=1,padx=1,pady=10)
+    on1.grid(row=0,column=0,padx=1,pady=5)
+    off1.grid(row=0,column=1,padx=1,pady=5)
 
 
     on2 = Button(stepperFrame, text="Run Stepper 2",command=sendStepper2,width=10,height=5,bg="green")
     off2 = Button(stepperFrame, text="Kill Stepper 2",command=killStepper2,width=10,height=5,bg="red")
-    on2.grid(row=1,column=0,padx=1,pady=10)
-    off2.grid(row=1,column=1,padx=1,pady=10)
+    on2.grid(row=1,column=0,padx=1,pady=5)
+    off2.grid(row=1,column=1,padx=1,pady=5)
 
 
     allOff = Button(stepperFrame,text="Kill All Steppers",command=killAllSteppers,height=5,bg="darkred")
@@ -154,10 +168,10 @@ def makePumpButtons():
     pumps.append(Checkbutton(pumpFrame,text="Pump 11",command = lambda: togglePump(11),width = 10))
     pumps.append(Checkbutton(pumpFrame,text="Pump 12",command = lambda: togglePump(12),width = 10))
 
-    for ind,pump in enumerate(pumps[:6]):
-        pump.grid(row=0,column=ind,padx=1,pady=5)
-    for ind,pump in enumerate(pumps[6:]):
-        pump.grid(row=1,column=ind,padx=1,pady=5)
+
+    for ind,pump in enumerate(pumps):
+        pump.grid(row=int(ind/2),column=ind%2,padx=1,pady=1)
+
 
 def togglePump(ind):
     writeToArduino2(bytes('$pump{:02d}'.format(ind),'utf-8'))
@@ -170,38 +184,10 @@ def toggleAct2():
 def makeActuatorButtons():
     act1Toggle = Button(linearFrame,text="Toggle Linear Actuator 1",command=toggleAct1,width =20,height = 5)
     act2Toggle = Button(linearFrame,text="Toggle Linear Actuator 2",command=toggleAct2,width=20,height=5)
-    act1Toggle.grid(row=0,column=0,padx=1,pady=5)
-    act2Toggle.grid(row=0,column=1,padx=1,pady=5)
-
-class liveReadout:
-    def __init__(self,parent,text):
-
-        self.label = Label(parent,text=text)
-        self.label.pack()
-        self.val = 100
-        self.text= text
-        if text == "Humidity":
-            self.code = b'getHumid\n'
-        elif text == "Temperature":
-            self.code=b'getTemp\n'
+    act1Toggle.grid(row=0,column=0,padx=1,pady=1)
+    act2Toggle.grid(row=1,column=0,padx=1,pady=1)
 
 
-
-        self.refreshValue()
-        self.label.after(2000,self.refreshValue)
-
-
-    def refreshValue(self):
-
-        #writeToArduino2(self.code)
-        #self.val = usb2.readLine()
-        self.val = self.val+1
-
-
-
-        self.label.configure(text="{}: {}".format(self.text,self.val))
-
-        self.label.after(2000,self.refreshValue)
 
 class tempHumid:
     def __init__(self,t,h):
@@ -220,6 +206,8 @@ class tempHumid:
 
 
     def refreshValues(self):
+
+
 
         writeToArduino2(self.code)
 
@@ -241,13 +229,25 @@ class tempHumid:
 def makeTempHumid():
 
 #tempOut = liveReadout(tempFrame,"Temperature")
-    tempOut = Label(tempFrame,text="Temperature")
+    tempOut = Label(tempFrame,text="Temperature: ",font=(20),justify=LEFT)
     tempOut.pack()
 #humidOut = liveReadout(humidFrame,"Humidity" )
-    humidOut = Label(humidFrame,text="Humidity")
+    humidOut = Label(humidFrame,text="Humidity: ",font=(20),justify=LEFT)
     humidOut.pack()
     global th
     th = tempHumid(tempOut,humidOut)
+
+
+def makeInfo():
+    image = Image.open("panther_head.png")
+    image = image.resize((200, int(200/1.24710221)), Image.ANTIALIAS)
+    panther = ImageTk.PhotoImage(image)
+
+    title = Label(info,text = "CROPP \n(CubeSat Research of Plants Platform) \nGround Station Test GUI",font=(30))
+    photo = Label(info,image = panther)
+    photo.image = panther
+    title.grid(row=0,column=0)
+    photo.grid(row=1,column=0)
 
 
 def startCameras():
@@ -269,7 +269,8 @@ if __name__ == '__main__':
     makeTempHumid()
     makePumpButtons()
     makeActuatorButtons()
-    startCameras()
+    # startCameras()
+    makeInfo()
 
     while True:
         window.update()
