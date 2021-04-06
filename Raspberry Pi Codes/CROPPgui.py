@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import serial
 # from Camera_Adapter.AdapterBoard import MultiAdapter
 # from Camera_Adapter.cameraapp import CameraApp
@@ -16,71 +17,112 @@ global usb2
 
 
 
-def connect():
-    global usb
-    global usb2
-    try:
-        usb = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
-    except:
-        print("ERROR could not open USB port 1, check port name and permissions.")
-        print("Exiting....")
-        exit(-1)
 
-    try:
-        usb2 = serial.Serial(USB_PORT2,9600,timeout=2) # Pumps, Linear Actuators, and Temp/Humidity sensor
-    except:
-        print("ERROR could not open USB port 2, check port name and permissions.")
-        print("Exiting....")
-        exit(-1)
+        
 
-#connect()
+global window
+global info
+global data 
+global stepperFrame
+global ledFrame
+global tempHumidFrame
+global tempFrame
+global humidFrame
+global linearFrame
+global pumpFrame
+global cameraFrame
 
-window = Tk()
-window.geometry("1200x500")
-
-
-info = Frame(window)
-info.grid(row=0,column=0)
-
-
-data = Frame(window)
-data.grid(row=0,column=1)
-
-stepperFrame = Frame(data)
-stepperFrame.grid(row=0,column=0,padx=10,sticky='n')
-
-ledFrame= Frame(data)
-ledFrame.grid(row=0,column=1,padx=10,sticky='n')
-
-tempHumidFrame = Frame(data)
-tempHumidFrame.grid(row=0,column=2,padx=4,sticky='n')
-
-tempFrame = Frame(tempHumidFrame)
-tempFrame.grid(row=0,column=0)
-
-humidFrame = Frame(tempHumidFrame)
-humidFrame.grid(row=1,column=0)
+def createWindow():
+    global window
+    global info
+    global data 
+    global stepperFrame
+    global ledFrame
+    global tempHumidFrame
+    global tempFrame
+    global humidFrame
+    global linearFrame
+    global pumpFrame
+    global cameraFrame
+    
+    window = Tk()
+    window.geometry("1200x500")
 
 
-linearFrame = Frame(data)
-linearFrame.grid(row=1,column=1)
+    info = Frame(window)
+    info.grid(row=0,column=0)
 
-pumpFrame = Frame(data)
-pumpFrame.grid(row=1,column=0)
 
-cameraFrame = Frame(data)
-cameraFrame.grid(row=0,column=2)
+    data = Frame(window)
+    data.grid(row=0,column=1)
 
+    stepperFrame = Frame(data)
+    stepperFrame.grid(row=0,column=0,padx=10,sticky='n')
+
+    ledFrame= Frame(data)
+    ledFrame.grid(row=0,column=1,padx=10,sticky='n')
+
+    tempHumidFrame = Frame(data)
+    tempHumidFrame.grid(row=0,column=2,padx=4,sticky='n')
+
+    tempFrame = Frame(tempHumidFrame)
+    tempFrame.grid(row=0,column=0)
+
+    humidFrame = Frame(tempHumidFrame)
+    humidFrame.grid(row=1,column=0)
+
+
+    linearFrame = Frame(data)
+    linearFrame.grid(row=1,column=1)
+
+    pumpFrame = Frame(data)
+    pumpFrame.grid(row=1,column=0)
+
+    cameraFrame = Frame(data)
+    cameraFrame.grid(row=0,column=2)
 
 
 
 def on_close():
     th.output.close()
     window.destroy()
-window.protocol("WM_DELETE_WINDOW",on_close)
+    window.protocol("WM_DELETE_WINDOW",on_close)
 
 
+def connect():
+    global usb
+    global usb2
+    usbFail = True
+    usb2Fail = True
+    
+    #try:
+        #usb = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
+    #except:
+        #usbFail = True
 
+    #try:
+        #usb2 = serial.Serial(USB_PORT2,9600,timeout=2) # Pumps, Linear Actuators, and Temp/Humidity sensor
+    #except:
+        #usb2Fail = True
+
+    while usbFail:
+        messagebox.showerror("ARDUINO NOT CONNECTED","Arduino 1 (Steppers and LED's) not connected.\nReconnect and press ok")
+        try:
+            usb = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
+            usbFail = False
+        except:
+            usb2Fail = True
+        
+            
+    while usb2Fail:
+        messagebox.showerror("ARDUINO NOT CONNECTED","Arduino 2 (Pumps, Actuators, and Temp/Humidity Sensor) not connected.\nReconnect and press ok")
+        try:
+            usb2 = serial.Serial(USB_PORT,9600,timeout=2) # Steppers and LED strips
+            usb2Fail = False
+        except:
+            usb2Fail = True
+      
+          
 
 
 
@@ -263,7 +305,10 @@ def startCameras():
 
 
 if __name__ == '__main__':
-    #connect()
+    
+    
+    createWindow()
+    connect()
     makeStepperButtons()
     makeLEDButtons()
     makeTempHumid()
